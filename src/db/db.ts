@@ -30,4 +30,5 @@ function initTables() {
   models.ProductSold.initialize();
   models.ProductSpecialPrice.initialize();
   models.Zone.initialize();
+  models.Payment.initialize();
 }

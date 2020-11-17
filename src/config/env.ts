@@ -6,7 +6,6 @@ export default {
 
 function config() {
   const envFilePath = __dirname + "/../../.env";
-  console.log(envFilePath);
   if (fs.existsSync(envFilePath)) {
     const fileContent = fs.readFileSync(envFilePath, "utf8");
     const arrEnv = fileContent.split("\n");

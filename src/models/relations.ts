@@ -10,3 +10,4 @@ models.Customer.hasMany(models.ProductSpecialPrice);
 models.Customer.belongsTo(models.Zone);
 models.Sale.hasMany(models.ProductSold);
 models.Sale.belongsTo(models.Customer);
+models.Payment.belongsTo(models.Customer);

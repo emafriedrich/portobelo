@@ -1,3 +1,4 @@
+import { Payment } from "./payment.model";
 import { Zone } from "./zone.model";
 import { ProductCategory } from "./product-category.model";
 import { Product } from "./product.model";
@@ -18,4 +19,5 @@ export default {
   Product,
   ProductCategory,
   Zone,
+  Payment,
 };

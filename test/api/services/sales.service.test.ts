@@ -12,6 +12,7 @@ describe("Sales service", () => {
   it("Save a sale from POST", async () => {
     const customer = await models.Customer.findAll({ limit: 1 });
     const products = await models.Product.findAll({ limit: 10 });
+    const oldPaymentsCount = await models.Payment.count();
     if (customer) {
       const anySale = await models.Sale.findAll({ limit: 1 });
       const sale = await salesService.save({
@@ -23,12 +24,15 @@ describe("Sales service", () => {
           unitPrice: p.price,
           productId: p.id,
         })),
+        sold: true,
       });
       expect(sale.id).toBeTruthy();
       const lengthProductsSold = await models.ProductSold.count({
         where: { saleId: sale.id },
       });
+      const newPaymentsCount = await models.Payment.count();
       expect(lengthProductsSold === products.length).toBe(true);
+      expect(newPaymentsCount > oldPaymentsCount).toBe(true);
     }
     return;
   });

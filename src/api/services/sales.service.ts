@@ -22,6 +22,7 @@ async function save(json: SaleJson): Promise<Sale> {
 }
 
 async function create(json: SaleJson): Promise<Sale> {
+  console.log(json);
   const t = await sequelize.transaction();
   const sale = await models.Sale.create(
     {
@@ -33,7 +34,7 @@ async function create(json: SaleJson): Promise<Sale> {
       transaction: t,
     }
   );
-  await setProductsSold(sale, json, t);
+  await saveProductsSoldAndPayments(sale, json, t);
   await t.commit();
   return sale;
 }
@@ -53,9 +54,15 @@ async function update(json: SaleJson) {
     }
   );
   const sale = (await models.Sale.findByPk(json.id)) as Sale;
-  await setProductsSold(sale, json, t);
+  await saveProductsSoldAndPayments(sale, json, t);
   await t.commit();
   return sale;
+}
+
+async function saveProductsSoldAndPayments(sale: Sale, json: SaleJson, t: Transaction) {
+  sale.total = await setProductsSold(sale, json, t);
+  await savePayment(sale, json, t);
+  return await sale.save({ transaction: t });
 }
 
 type SaleJson = {
@@ -63,6 +70,7 @@ type SaleJson = {
   date: string | Date;
   customerId: number;
   productsSold: ProductSoldJson[];
+  sold: boolean;
 };
 
 type ProductSoldJson = {
@@ -71,8 +79,14 @@ type ProductSoldJson = {
   unitPrice: number;
 };
 
-async function setProductsSold(sale: Sale, json: SaleJson, t: Transaction) {
-  sale.total = 0;
+async function savePayment(sale: Sale, json: SaleJson, t: Transaction) {
+  if (json.sold) {
+    await models.Payment.create({ amount: sale.total, customerId: json.customerId }, { transaction: t });
+  }
+}
+
+async function setProductsSold(sale: Sale, json: SaleJson, t: Transaction): Promise<number> {
+  let total = 0;
   await models.ProductSold.destroy({
     where: { saleId: sale.id },
     transaction: t,
@@ -80,9 +94,9 @@ async function setProductsSold(sale: Sale, json: SaleJson, t: Transaction) {
   for (const jsonProductSold of json.productsSold) {
     (jsonProductSold as any).saleId = sale.id;
     await models.ProductSold.upsert(jsonProductSold, { transaction: t });
-    sale.total += jsonProductSold.quantity * jsonProductSold.unitPrice;
+    total += jsonProductSold.quantity * jsonProductSold.unitPrice;
   }
-  await sale.save({ transaction: t });
+  return total;
 }
 
 export default {

@@ -1,13 +1,21 @@
 import * as express from "express";
 import customerService from "../services/customer.service";
 
-const route = express.Router();
+const customerRoutes = express.Router();
 
 export default (app: express.Router) => {
-  app.use("/customers", route);
-
-  route.get("/", findAll);
+  app.use("/customers", customerRoutes);
+  customerRoutes.post("/payments", registerPayment);
+  customerRoutes.get("/", findAll);
 };
+
+async function registerPayment(req: express.Request, res: express.Response) {
+  const newBalance = await customerService.registerPayment({
+    customerId: req.body.customerId,
+    amount: req.body.amount,
+  });
+  res.send({ newBalance });
+}
 
 async function findAll(req: express.Request, res: express.Response) {
   const customers = await customerService.findCustomers({
